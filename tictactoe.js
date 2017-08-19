@@ -1,9 +1,4 @@
-const readline = require('readline');
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-  prompt: '\n>> '
-});
+const prompt = require('syncprompt');
 
 function nextItem(list) {
   if(this.index < list.length) this.index++;
@@ -17,20 +12,12 @@ const board = [[null, null, null],
                [null, null, null]];
 
 const players = ['x', 'o'];
-let currentPlayer = null;
 
-function drawBoard() {
-  currentPlayer = nextItem(players);
+while(true) {
+  let currentPlayer = nextItem(players);
   console.log(board.map(row => row.map(e => e || ' ').join('|')).join('\n'));
 
-  rl.prompt();
-}
-
-drawBoard();
-
-rl.on('line', (line) => {
-  const [row, col] = line.split(' ').map(e => Number(e));
-  console.log('\n');
+  const [row, col] = prompt('>> ').split(' ').map(e => Number(e));
   board[row][col] = currentPlayer;
-  drawBoard();
-});
+  console.log('\n');
+}
