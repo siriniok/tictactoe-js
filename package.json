@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/siriniok/tictactoe-js/issues"
   },
-  "homepage": "https://github.com/siriniok/tictactoe-js#readme"
+  "homepage": "https://github.com/siriniok/tictactoe-js#readme",
+  "dependencies": {
+    "syncprompt": "^2.0.0"
+  }
 }
