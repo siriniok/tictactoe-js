@@ -11,6 +11,9 @@ const board = [[null, null, null],
                [null, null, null],
                [null, null, null]];
 
+const leftDiagonal = [[0,0], [1,1], [2,2]];
+const rightDiagonal = [[2,0], [1,1], [0,2]];
+
 const players = ['x', 'o'];
 
 let currentPlayer = nextItem(players);
@@ -33,6 +36,39 @@ while(true) {
 
   board[row][col] = currentPlayer;
   console.log('\n');
+
+  let lines = [];
+
+  [leftDiagonal, rightDiagonal].map((line) => {
+    line.map((cell) => {
+      if(cell[0] === row && cell[1] === col) lines.push(line);
+    });
+  });
+
+  lines.push([0, 1, 2].map(c1 => [row, c1]));
+  lines.push([0, 1, 2].map(r1 => [r1, col]));
+
+  const win = lines.some((line) => {
+    return line.every((cell) => {
+      const [row, col] = cell;
+
+      return board[row][col] === currentPlayer;
+    });
+  });
+
+  if(win) {
+    console.log(`${currentPlayer} wins!`);
+    process.exit();
+  }
+
+  const draw = board.reduce((a, b) => a.concat(b), [])
+                    .filter(cell => cell)
+                    .length == 9;
+
+  if(draw) {
+    console.log("It's a draw!");
+    process.exit();
+  }
 
   currentPlayer = nextItem(players);
 }
