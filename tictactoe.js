@@ -23,9 +23,10 @@ while(true) {
 
   const [row, col] = prompt('>> ').trim().split(' ').map(e => Number(e));
 
-  if((row < 0 || row >= board.length) ||
+  if(!(Number.isInteger(row) && Number.isInteger(col)) ||
+     (row < 0 || row >= board.length) ||
      (col < 0 || col >= board[row].length)) {
-    console.log('Out of bounds, try another position');
+    console.log('Coordinates are incorrect, try another position');
     continue;
   }
 
