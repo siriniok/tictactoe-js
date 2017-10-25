@@ -1,6 +1,7 @@
 const prompt = require('syncprompt');
 
 const display = require('./utils/display');
+const Cycle = require('./utils/Cycle');
 
 const {Board, BoardInvalidRequest} = require('./Board');
 const Rules = require('./Rules');
@@ -8,11 +9,9 @@ const Rules = require('./Rules');
 class Game {
   constructor() {
     this._board = new Board();
-    this._players = ['X', '0'];
+    this._players = new Cycle(['X', '0']);
     this._currentPlayer = null;
     this._over = false;
-
-    this._index = 0;
   }
 
   play() {
@@ -36,14 +35,7 @@ class Game {
   finishGame() { this._over = true; }
 
   _startNewTurn() {
-    function nextItem(list) {
-      if(this._index < list.length) this._index++;
-      else this._index = 1;
-
-      return list[this._index - 1];
-    }
-
-    this._currentPlayer = nextItem.call(this, this.players);
+    this._currentPlayer = this.players.next();
   }
 
   _displayBoard() {
