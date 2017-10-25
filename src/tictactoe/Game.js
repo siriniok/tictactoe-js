@@ -1,9 +1,9 @@
 const prompt = require('syncprompt');
 
+const display = require('./utils/display');
+
 const {Board, BoardInvalidRequest} = require('./Board');
 const Rules = require('./Rules');
-
-const ERROR_MSG_COLOR = 31; // Red
 
 class Game {
   constructor() {
@@ -21,8 +21,8 @@ class Game {
       this._displayBoard();
       this._move();
 
-      this._checkForWin(() => this.display(`${this.currentPlayer} wins!`));
-      this._checkForDraw(() => this.display("It's a draw!"));
+      this._checkForWin(() => display(`${this.currentPlayer} wins!`));
+      this._checkForDraw(() => display("It's a draw!"));
 
       if(this.isOver) return;
     }
@@ -34,14 +34,6 @@ class Game {
   get isOver() { return this._over; }
 
   finishGame() { this._over = true; }
-
-  display(msg, err=false) {
-    console.log(`${err ? this._wrapErrorMsg(msg) : msg}\n`);
-  }
-
-  _wrapErrorMsg(msg) {
-    return `\x1b[${ERROR_MSG_COLOR}m${msg}\x1b[0m`;
-  }
 
   _startNewTurn() {
     function nextItem(list) {
@@ -55,7 +47,7 @@ class Game {
   }
 
   _displayBoard() {
-    this.display(this.board);
+    display(this.board);
   }
 
   _move() {
@@ -65,7 +57,7 @@ class Game {
     try {
       return this.board.setMark(row, col, this.currentPlayer);
     } catch (e) {
-      if(e instanceof BoardInvalidRequest) this.display(e.message, true);
+      if(e instanceof BoardInvalidRequest) display(e.message, true);
       else throw e;
 
       return this._move();
