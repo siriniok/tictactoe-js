@@ -1,40 +1,36 @@
 const prompt = require('syncprompt');
 
+const {Board, BoardInvalidRequest} = require('./Board');
+
 module.exports = class Game {
   constructor() {
-    this.board = [[null, null, null],
-                  [null, null, null],
-                  [null, null, null]];
+    this._board = new Board();
+    this._players = ['X', '0'];
+    this._currentPlayer = null;
+    this._over = false;
 
-    this.players = ['x', 'o'];
-    this.currentPlayer = null;
     this._index = 0;
   }
 
   play() {
-    this._startNewTurn();
-
     while(true) {
-      this._displayBoard();
-      const [row, col] = this._playerInput();
-
-      if(!this._isValidMove(row, col)) continue;
-
-      this.board[row][col] = this.currentPlayer;
-
-      if(this._isWinningMove(row, col)) {
-        console.log(`${this.currentPlayer} wins!`);
-        return;
-      }
-
-      if(this._isDraw()) {
-        console.log("It's a draw!");
-        return;
-      }
-
       this._startNewTurn();
+      this._displayBoard();
+      this._move();
+
+      this._checkForWin();
+      this._checkForDraw();
+
+      if(this.isOver) return;
     }
   }
+
+  get board() { return this._board; }
+  get players() { return this._players; }
+  get currentPlayer() { return this._currentPlayer; }
+  get isOver() { return this._over; }
+
+  finishGame() { this._over = true; }
 
   _startNewTurn() {
     function nextItem(list) {
@@ -44,62 +40,59 @@ module.exports = class Game {
       return list[this._index - 1];
     }
 
-    this.currentPlayer = nextItem.call(this, this.players);
+    this._currentPlayer = nextItem.call(this, this.players);
   }
 
   _displayBoard() {
-    console.log(this.board.map(row => row.map(c => c || ' ').join('|')).join('\n'));
+    console.log(this.board.toString());
   }
 
-  _playerInput() {
-    const coords = prompt('>> ').trim().split(' ').map(c => Number(c));
+  _move() {
+    const [row, col] = this._moveInput();
     console.log();
-    return coords;
-  }
 
-  _isValidMove(row, col) {
-    if(!(Number.isInteger(row) && Number.isInteger(col)) ||
-       (row < 0 || row >= this.board.length) ||
-       (col < 0 || col >= this.board[row].length)) {
-      console.log('Coordinates are incorrect, try another position\n');
-      return false;
+    try {
+      return this.board.setMark(row, col, this.currentPlayer);
+    } catch (e) {
+      if(e instanceof BoardInvalidRequest) console.log(`${e.message}\n`);
+      else throw e;
+
+      return this._move();
     }
+  }
 
-    if(this.board[row][col]) {
-      console.log('Cell occupied, try another position\n');
-      return false;
+  _moveInput() {
+    return prompt('>> ').trim().split(' ').map(c => Number(c));
+  }
+  
+  _checkForWin() {
+    if(this._isWin) {
+      console.log(`${this.currentPlayer} wins!`);
+      this.finishGame();
     }
-
-    return true;
   }
 
-  _isWinningMove(row, col) {
-    const leftDiagonal = [[0,0], [1,1], [2,2]];
-    const rightDiagonal = [[2,0], [1,1], [0,2]];
-
-    let lines = [];
-
-    [leftDiagonal, rightDiagonal].map((line) => {
-      line.map((cell) => {
-        if(cell[0] === row && cell[1] === col) lines.push(line);
-      });
-    });
-
-    lines.push([0, 1, 2].map(c1 => [row, c1]));
-    lines.push([0, 1, 2].map(r1 => [r1, col]));
-
-    return lines.some((line) => {
-      return line.every((cell) => {
-        const [row, col] = cell;
-
-        return this.board[row][col] === this.currentPlayer;
-      });
-    });
+  _checkForDraw() {
+    if(this._isDraw) {
+      console.log("It's a draw!");
+      this.finishGame();
+    }
   }
 
-  _isDraw() {
-    return this.board.reduce((a, b) => a.concat(b), [])
-      .filter(cell => cell)
-      .length == 9;
+  get _isWin() {
+    const lastMove = this.board.lastMove;
+
+    if(!lastMove) return false;
+
+    return this.board.intersectingLines(...lastMove)
+      .some(line => this._isCompleteLine(line, this.currentPlayer));
   }
-};
+
+  get _isDraw() {
+    return this.board.isCovered;
+  }
+
+  _isCompleteLine(line, playerMark) {
+    return line.every(mark => mark === playerMark);
+  }
+}
