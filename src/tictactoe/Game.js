@@ -2,6 +2,8 @@ const prompt = require('syncprompt');
 
 const {Board, BoardInvalidRequest} = require('./Board');
 
+const ERROR_MSG_COLOR = 31; // Red
+
 module.exports = class Game {
   constructor() {
     this._board = new Board();
@@ -18,8 +20,8 @@ module.exports = class Game {
       this._displayBoard();
       this._move();
 
-      this._checkForWin();
-      this._checkForDraw();
+      this._checkForWin(() => this.display(`${this.currentPlayer} wins!`));
+      this._checkForDraw(() => this.display("It's a draw!"));
 
       if(this.isOver) return;
     }
@@ -31,6 +33,14 @@ module.exports = class Game {
   get isOver() { return this._over; }
 
   finishGame() { this._over = true; }
+
+  display(msg, err=false) {
+    console.log(`${err ? this._wrapErrorMsg(msg) : msg}\n`);
+  }
+
+  _wrapErrorMsg(msg) {
+    return `\x1b[${ERROR_MSG_COLOR}m${msg}\x1b[0m`;
+  }
 
   _startNewTurn() {
     function nextItem(list) {
@@ -44,7 +54,7 @@ module.exports = class Game {
   }
 
   _displayBoard() {
-    console.log(this.board.toString());
+    this.display(this.board);
   }
 
   _move() {
@@ -54,7 +64,7 @@ module.exports = class Game {
     try {
       return this.board.setMark(row, col, this.currentPlayer);
     } catch (e) {
-      if(e instanceof BoardInvalidRequest) console.log(`${e.message}\n`);
+      if(e instanceof BoardInvalidRequest) this.display(e.message, true);
       else throw e;
 
       return this._move();
@@ -65,16 +75,16 @@ module.exports = class Game {
     return prompt('>> ').trim().split(' ').map(c => Number(c));
   }
   
-  _checkForWin() {
+  _checkForWin(notifier = null) {
     if(this._isWin) {
-      console.log(`${this.currentPlayer} wins!`);
+      notifier();
       this.finishGame();
     }
   }
 
-  _checkForDraw() {
+  _checkForDraw(notifier = null) {
     if(this._isDraw) {
-      console.log("It's a draw!");
+      notifier();
       this.finishGame();
     }
   }
